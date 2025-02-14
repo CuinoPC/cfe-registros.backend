@@ -36,4 +36,18 @@ const TerminalFoto = {
     }
 };
 
-module.exports = { Terminal, TerminalFoto };
+const HistorialTerminal = {
+    create: (terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, accion, callback) => {
+        const query = `INSERT INTO historial_terminales 
+                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, accion) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        db.query(query, [terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, accion], callback);
+    },
+
+    getAll: (callback) => {
+        const query = "SELECT * FROM historial_terminales ORDER BY fecha DESC";
+        db.query(query, callback);
+    }
+};
+
+module.exports = { Terminal, TerminalFoto, HistorialTerminal };

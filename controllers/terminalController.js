@@ -1,4 +1,4 @@
-const { Terminal, TerminalFoto } = require('../models/terminalModel');
+const { Terminal, TerminalFoto, HistorialTerminal  } = require('../models/terminalModel');
 
 // Obtener todas las terminales
 const getTerminales = (req, res) => {
@@ -48,10 +48,18 @@ const createTerminal = (req, res) => {
 
     Terminal.create(marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, (err, result) => {
         if (err) {
-            console.error("Error al crear terminal:", err);
             res.status(500).json({ message: "Error al crear la terminal" });
         } else {
-            res.status(201).json({ message: "Terminal creada con éxito", id: result.insertId });
+            const terminalId = result.insertId;
+
+            // ✅ Guardar en el historial
+            HistorialTerminal.create(terminalId, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, 'Creación', (histErr) => {
+                if (histErr) {
+                    console.error("Error al registrar historial:", histErr);
+                }
+            });
+
+            res.status(201).json({ message: "Terminal creada con éxito", id: terminalId });
         }
     });
 };
@@ -65,12 +73,29 @@ const updateTerminal = (req, res) => {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
-    Terminal.update(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, (err, result) => {
+    Terminal.update(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, (err) => {
         if (err) {
-            console.error("Error al actualizar terminal:", err);
             res.status(500).json({ message: "Error al actualizar la terminal" });
         } else {
+            // ✅ Guardar en el historial
+            HistorialTerminal.create(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, 'Actualización', (histErr) => {
+                if (histErr) {
+                    console.error("Error al registrar historial:", histErr);
+                }
+            });
+
             res.status(200).json({ message: "Terminal actualizada con éxito" });
+        }
+    });
+};
+
+// Obtener historial
+const getHistorial = (req, res) => {
+    HistorialTerminal.getAll((err, results) => {
+        if (err) {
+            res.status(500).json({ message: "Error al obtener historial" });
+        } else {
+            res.status(200).json(results);
         }
     });
 };
@@ -105,4 +130,4 @@ const uploadPhotos = async (req, res) => {
     }
 };
 
-module.exports = { getTerminales, createTerminal, updateTerminal, uploadPhotos };
+module.exports = { getTerminales, createTerminal, updateTerminal, uploadPhotos, getHistorial };
