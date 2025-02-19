@@ -32,3 +32,4 @@ router.post('/terminales/upload', upload.array('photos', 7), uploadPhotos);
 router.get('/historial', authMiddleware, getHistorial);
 
 module.exports = router;
+
