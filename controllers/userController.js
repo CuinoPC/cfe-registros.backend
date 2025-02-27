@@ -1,13 +1,13 @@
 const User = require('../models/userModel');
 
 exports.createUser = async (req, res) => {
-    const { nombre_completo, rp, area_id, contrasenia, es_admin } = req.body;
+    const { nombre_completo, rp, area_id, contrasenia, es_admin, es_centro } = req.body;
 
     if (!nombre_completo || !rp || !area_id || !contrasenia) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
-    User.createUser(nombre_completo, rp, area_id, contrasenia, es_admin, (err, result) => {
+    User.createUser(nombre_completo, rp, area_id, contrasenia, es_admin, es_centro, (err, result) => {
         if (err) {
             return res.status(500).json({ error: 'Error al crear el usuario' });
         }
@@ -31,14 +31,14 @@ exports.getAllUsers = (req, res) => {
 };
 
 exports.updateUser = (req, res) => {
-    const { nombre_completo, area_id, contrasenia, es_admin } = req.body;
+    const { nombre_completo, area_id, contrasenia, es_admin, es_centro } = req.body;
     const { rp } = req.params;
 
     if (!nombre_completo || !area_id || !contrasenia) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
-    User.updateUser(nombre_completo, area_id, contrasenia, es_admin, rp, (err, result) => {
+    User.updateUser(nombre_completo, area_id, contrasenia, es_admin, es_centro, rp, (err, result) => {
         if (err) {
             return res.status(500).json({ error: 'Error al actualizar el usuario' });
         }

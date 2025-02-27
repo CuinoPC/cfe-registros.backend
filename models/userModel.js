@@ -11,27 +11,27 @@ class User {
         );
     }
 
-    static createUser(nombre_completo, rp, area_id, contrasenia, es_admin, callback) {
+    static createUser(nombre_completo, rp, area_id, contrasenia, es_admin, es_centro, callback) {
         db.query(
-            'INSERT INTO usuarios (nombre_completo, rp, area_id, contrasenia, es_admin) VALUES (?, ?, ?, ?, ?)',
-            [nombre_completo, rp, area_id, contrasenia, es_admin],
+            'INSERT INTO usuarios (nombre_completo, rp, area_id, contrasenia, es_admin, es_centro) VALUES (?, ?, ?, ?, ?, ?)',
+            [nombre_completo, rp, area_id, contrasenia, es_admin, es_centro],
             callback
         );
     }
 
     static getAllUsers(callback) {
         db.query(
-            `SELECT u.id, u.nombre_completo, u.rp, a.nom_area, a.proceso, u.contrasenia, u.es_admin 
+            `SELECT u.id, u.nombre_completo, u.rp, a.nom_area, a.proceso, u.contrasenia, u.es_admin, u.es_centro 
              FROM usuarios u 
              JOIN areas a ON u.area_id = a.id`,
             callback
         );
     }
 
-    static updateUser(nombre_completo, area_id, contrasenia, es_admin, rp, callback) {
+    static updateUser(nombre_completo, area_id, contrasenia, es_admin, es_centro, rp, callback) {
         db.query(
-            'UPDATE usuarios SET nombre_completo = ?, area_id = ?, contrasenia = ?, es_admin = ? WHERE rp = ?',
-            [nombre_completo, area_id, contrasenia, es_admin, rp],
+            'UPDATE usuarios SET nombre_completo = ?, area_id = ?, contrasenia = ?, es_admin = ?, es_centro = ? WHERE rp = ?',
+            [nombre_completo, area_id, contrasenia, es_admin, es_centro, rp],
             callback
         );
     }
