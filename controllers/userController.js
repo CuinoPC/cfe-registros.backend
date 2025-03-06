@@ -23,7 +23,8 @@ exports.getAllUsers = (req, res) => {
 
         const users = results.map(user => ({
             ...user,
-            es_admin: user.es_admin === 1
+            es_admin: user.es_admin === 1,
+            es_centro: user.es_centro === 1
         }));
 
         res.json(users);

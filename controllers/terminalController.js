@@ -103,7 +103,6 @@ const getHistorial = (req, res) => {
 // Función para subir fotos
 const uploadPhotos = async (req, res) => {
     try {
-        
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: 'No se subieron fotos' });
         }
@@ -113,15 +112,25 @@ const uploadPhotos = async (req, res) => {
             return res.status(400).json({ message: 'terminalId es requerido' });
         }
 
-        const photoUrls = req.files.map(file => `/uploads/${file.filename}`);
-
-        // Guardar las fotos en la base de datos
-        TerminalFoto.create(terminalId, photoUrls, (err, result) => {
+        // ✅ Verificar el número de fotos en la última semana
+        TerminalFoto.countWeeklyUploads(terminalId, (err, count) => {
             if (err) {
-                console.error('Error al guardar fotos en la BD:', err);
-                return res.status(500).json({ message: 'Error interno al guardar las fotos' });
+                return res.status(500).json({ message: 'Error interno al verificar fotos' });
             }
-            res.status(200).json({ message: 'Fotos subidas correctamente', urls: photoUrls });
+
+            if (count + req.files.length > 7) {
+                return res.status(400).json({ message: 'Límite de 7 fotos por semana alcanzado' });
+            }
+
+            // Guardar las fotos si el usuario aún no ha alcanzado el límite
+            const photoUrls = req.files.map(file => `/uploads/${file.filename}`);
+            TerminalFoto.create(terminalId, photoUrls, (err) => {
+                if (err) {
+                    console.error('Error al guardar fotos en la BD:', err);
+                    return res.status(500).json({ message: 'Error interno al guardar las fotos' });
+                }
+                res.status(200).json({ message: 'Fotos subidas correctamente', urls: photoUrls });
+            });
         });
 
     } catch (error) {

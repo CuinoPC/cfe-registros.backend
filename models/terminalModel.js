@@ -25,22 +25,41 @@ const TerminalFoto = {
         if (!fotoUrls || fotoUrls.length === 0) {
             return callback(new Error("No se proporcionaron fotos"));
         }
+
         const query = "INSERT INTO terminales_fotos (terminal_id, foto_url, fecha_subida) VALUES ?";
         const values = fotoUrls.map(url => [terminalId, url, new Date()]);
-        db.query(query, [values], callback);
+
+        db.query(query, [values], (err, result) => {
+            if (err) return callback(err);
+            callback(null, result);
+        });
     },
 
     getByTerminalId: (terminalId, callback) => {
         const query = "SELECT * FROM terminales_fotos WHERE terminal_id = ? ORDER BY fecha_subida DESC";
         db.query(query, [terminalId], callback);
+    },
+
+    countWeeklyUploads: (terminalId, callback) => {
+        const query = `
+            SELECT COUNT(*) AS total FROM terminales_fotos 
+            WHERE terminal_id = ? 
+            AND fecha_subida >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        `;
+        db.query(query, [terminalId], (err, result) => {
+            if (err) {
+                return callback(err, null);
+            }
+            callback(null, result.length > 0 ? result[0].total : 0);
+        });
     }
 };
 
 const HistorialTerminal = {
     create: (terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, accion, callback) => {
         const query = `INSERT INTO historial_terminales 
-                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, accion) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, accion, fecha) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
         db.query(query, [terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, accion], callback);
     },
 
