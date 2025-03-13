@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { getTerminales, createTerminal, updateTerminal, uploadPhotos, getHistorial } = require('../controllers/terminalController');
+const { getTerminales, createTerminal, updateTerminal, uploadPhotos, getHistorial, marcarTerminalDanada,  obtenerTerminalesDanadas, actualizarTerminalDanada } = require('../controllers/terminalController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // 📂 Asegurar que la carpeta `uploads/` existe
@@ -30,6 +30,12 @@ router.put('/terminales/:id', authMiddleware, updateTerminal);
 router.post('/terminales/upload', upload.array('photos', 7), uploadPhotos);
 
 router.get('/historial', authMiddleware, getHistorial);
+
+router.post('/terminales/danadas', authMiddleware, marcarTerminalDanada);
+router.get('/terminales/danadas', authMiddleware, obtenerTerminalesDanadas);
+
+router.put('/terminales/danadas/:id', authMiddleware, actualizarTerminalDanada);
+
 
 module.exports = router;
 

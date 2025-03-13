@@ -1,4 +1,4 @@
-const { Terminal, TerminalFoto, HistorialTerminal  } = require('../models/terminalModel');
+const { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada   } = require('../models/terminalModel');
 
 // Obtener todas las terminales
 const getTerminales = (req, res) => {
@@ -139,4 +139,61 @@ const uploadPhotos = async (req, res) => {
     }
 };
 
-module.exports = { getTerminales, createTerminal, updateTerminal, uploadPhotos, getHistorial };
+const marcarTerminalDanada = (req, res) => {
+    const { terminalId, marca, modelo, serie } = req.body;
+    
+    TerminalDanada.create(terminalId, marca, modelo, serie, (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: "Error al registrar la terminal dañada" });
+        }
+        res.status(201).json({ message: "Terminal marcada como dañada correctamente" });
+    });
+};
+
+const obtenerTerminalesDanadas = (req, res) => {
+    TerminalDanada.getAll((err, results) => {
+        if (err) {
+            return res.status(500).json({ error: "Error al obtener terminales dañadas" });
+        }
+
+        res.status(200).json(results); // 🔹 Mostramos todas las terminales, incluso las reparadas
+    });
+};
+
+
+
+const actualizarTerminalDanada = (req, res) => {
+    const { id } = req.params;
+    let { fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: "El ID de la terminal dañada es obligatorio" });
+    }
+
+    // ✅ Convertir formato de fecha a 'YYYY-MM-DD'
+    const formatDate = (date) => {
+        return date ? new Date(date).toISOString().split("T")[0] : null;
+    };
+
+    fechaReporte = formatDate(fechaReporte);
+    fechaGuia = formatDate(fechaGuia);
+    fechaDiagnostico = formatDate(fechaDiagnostico);
+    fechaAutorizacion = formatDate(fechaAutorizacion);
+    fechaReparacion = formatDate(fechaReparacion);
+
+    TerminalDanada.update(id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, (err, result) => {
+        if (err) {
+            console.error("Error al actualizar la terminal dañada:", err);
+            return res.status(500).json({ error: "Error al actualizar la terminal dañada" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Terminal dañada no encontrada" });
+        }
+
+        res.status(200).json({ message: "Terminal dañada actualizada correctamente" });
+    });
+};
+
+
+module.exports = { getTerminales, createTerminal, updateTerminal, uploadPhotos, getHistorial, marcarTerminalDanada, obtenerTerminalesDanadas, actualizarTerminalDanada };

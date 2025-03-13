@@ -69,4 +69,36 @@ const HistorialTerminal = {
     }
 };
 
-module.exports = { Terminal, TerminalFoto, HistorialTerminal };
+const TerminalDanada = {  
+    create: (terminalId, marca, modelo, serie, callback) => {
+        const query = `INSERT INTO terminales_danadas (terminal_id, marca, modelo, serie) VALUES (?, ?, ?, ?)`;
+        db.query(query, [terminalId, marca, modelo, serie], callback);
+    },
+
+    update: (id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, callback) => {
+        const query = `UPDATE terminales_danadas 
+                       SET fecha_reporte = ?, fecha_guia = ?, fecha_diagnostico = ?, 
+                           fecha_autorizacion = ?, fecha_reparacion = ?, dias_reparacion = ?, costo = ? 
+                       WHERE id = ?`;
+
+        // ✅ Asegurar que las fechas estén en formato 'YYYY-MM-DD' o NULL si no hay valor
+        const formatDate = (date) => (date ? new Date(date).toISOString().split("T")[0] : null);
+
+        db.query(query, [
+            formatDate(fechaReporte),
+            formatDate(fechaGuia),
+            formatDate(fechaDiagnostico),
+            formatDate(fechaAutorizacion),
+            formatDate(fechaReparacion),
+            diasReparacion,
+            costo,
+            id
+        ], callback);
+    },
+
+    getAll: (callback) => {
+        db.query("SELECT * FROM terminales_danadas", callback);
+    }
+};
+
+module.exports = { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada };
