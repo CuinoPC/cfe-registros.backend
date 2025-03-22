@@ -1,4 +1,4 @@
-const { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada   } = require('../models/terminalModel');
+const { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada, SupervisionTerminal } = require('../models/terminalModel');
 
 // Obtener todas las terminales
 const getTerminales = (req, res) => {
@@ -118,7 +118,7 @@ const uploadPhotos = async (req, res) => {
                 return res.status(500).json({ message: 'Error interno al verificar fotos' });
             }
 
-            if (count + req.files.length > 7) {
+            if (count + req.files.length > 10) {
                 return res.status(400).json({ message: 'Límite de 7 fotos por semana alcanzado' });
             }
 
@@ -140,9 +140,9 @@ const uploadPhotos = async (req, res) => {
 };
 
 const marcarTerminalDanada = (req, res) => {
-    const { terminalId, marca, modelo, serie } = req.body;
+    const { terminalId, marca, modelo, serie, inventario } = req.body;
     
-    TerminalDanada.create(terminalId, marca, modelo, serie, (err, result) => {
+    TerminalDanada.create(terminalId, marca, modelo, serie, inventario, (err, result) => {
         if (err) {
             return res.status(500).json({ error: "Error al registrar la terminal dañada" });
         }
@@ -195,5 +195,65 @@ const actualizarTerminalDanada = (req, res) => {
     });
 };
 
+// Obtener terminales por área
+const getTerminalesPorArea = (req, res) => {
+    const { area } = req.params;
 
-module.exports = { getTerminales, createTerminal, updateTerminal, uploadPhotos, getHistorial, marcarTerminalDanada, obtenerTerminalesDanadas, actualizarTerminalDanada };
+    Terminal.getByArea(area, (err, results) => {
+        if (err) {
+            console.error("Error al obtener terminales por área:", err);
+            res.status(500).json({ message: "Error interno del servidor" });
+        } else {
+            res.status(200).json(results.length > 0 ? results : []); // ✅ Enviar lista vacía si no hay resultados
+        }
+    });
+};
+
+// ✅ Guardar datos de supervisión
+const saveSupervisionData = (req, res) => {
+    const supervisionData = req.body;
+
+    SupervisionTerminal.save(supervisionData, (err, result) => {
+        if (err) {
+            console.error("Error al guardar datos de supervisión:", err);
+            res.status(500).json({ message: "Error interno del servidor" });
+        } else {
+            res.status(201).json({ message: "Datos de supervisión guardados correctamente" });
+        }
+    });
+};
+
+// ✅ Actualizar un campo de supervisión en tiempo real
+const updateSupervisionData = (req, res) => {
+    const { terminal_id, field, value } = req.body;
+
+    SupervisionTerminal.updateField(terminal_id, field, value, (err, result) => {
+        if (err) {
+            console.error("Error al actualizar supervisión:", err);
+            res.status(500).json({ message: "Error interno del servidor" });
+        } else {
+            res.status(200).json({ message: "Campo actualizado correctamente" });
+        }
+    });
+};
+
+const getSupervisionHistorial = (req, res) => {
+    const { terminalId } = req.params;
+
+    SupervisionTerminal.getByTerminalId(terminalId, (err, results) => {
+        if (err) {
+            console.error("Error al obtener historial de supervisión:", err);
+            return res.status(500).json({ message: "Error interno" });
+        }
+
+        res.status(200).json(results);
+    });
+};
+
+module.exports = { 
+    getTerminales, createTerminal, updateTerminal, 
+    uploadPhotos, getHistorial, marcarTerminalDanada, 
+    obtenerTerminalesDanadas, actualizarTerminalDanada, getTerminalesPorArea, 
+    SupervisionTerminal, saveSupervisionData, updateSupervisionData,
+    getSupervisionHistorial 
+};

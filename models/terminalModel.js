@@ -7,6 +7,20 @@ Terminal.getAll = (callback) => {
     db.query('SELECT * FROM terminales', callback);
 };
 
+// Obtener terminales por área
+Terminal.getByArea = (area, callback) => {
+    const query = `
+        SELECT t.id, t.marca, t.modelo, t.serie, t.inventario, 
+               t.rpe_responsable, t.nombre_responsable, t.usuario_id 
+        FROM terminales t
+        JOIN usuarios u ON t.usuario_id = u.id
+        JOIN areas a ON u.area_id = a.id
+        WHERE a.nom_area = ?;
+    `;
+
+    db.query(query, [area], callback);
+};
+
 // Crear una nueva terminal
 Terminal.create = (marca, modelo, serie, inventario, rpe, nombre, usuarioId, callback) => {
     const query = 'INSERT INTO terminales (marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
@@ -70,9 +84,9 @@ const HistorialTerminal = {
 };
 
 const TerminalDanada = {  
-    create: (terminalId, marca, modelo, serie, callback) => {
-        const query = `INSERT INTO terminales_danadas (terminal_id, marca, modelo, serie) VALUES (?, ?, ?, ?)`;
-        db.query(query, [terminalId, marca, modelo, serie], callback);
+    create: (terminalId, marca, modelo, serie, inventario, callback) => {
+        const query = `INSERT INTO terminales_danadas (terminal_id, marca, modelo, serie, inventario) VALUES (?, ?, ?, ?, ?)`;
+        db.query(query, [terminalId, marca, modelo, serie, inventario], callback);
     },
 
     update: (id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, callback) => {
@@ -101,4 +115,87 @@ const TerminalDanada = {
     }
 };
 
-module.exports = { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada };
+// ✅ Modelo para datos de supervisión
+const SupervisionTerminal = {};
+
+// 🔹 Guardar datos de supervisión
+SupervisionTerminal.save = (data, callback) => {
+    const query = `
+        INSERT INTO supervision_terminales (terminal_id, anio_antiguedad, rpe_usuario, fotografias_fisicas,
+            etiqueta_activo_fijo, chip_con_serie_tableta, foto_carcasa, apn, correo_gmail, seguridad_desbloqueo,
+            coincide_serie_sim_imei, responsiva_apn, centro_trabajo_correcto, responsiva, serie_correcta_sistic,
+            serie_correcta_siitic, asignacion_rpe_mysap, total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            anio_antiguedad = VALUES(anio_antiguedad),
+            rpe_usuario = VALUES(rpe_usuario),
+            fotografias_fisicas = VALUES(fotografias_fisicas),
+            etiqueta_activo_fijo = VALUES(etiqueta_activo_fijo),
+            chip_con_serie_tableta = VALUES(chip_con_serie_tableta),
+            foto_carcasa = VALUES(foto_carcasa),
+            apn = VALUES(apn),
+            correo_gmail = VALUES(correo_gmail),
+            seguridad_desbloqueo = VALUES(seguridad_desbloqueo),
+            coincide_serie_sim_imei = VALUES(coincide_serie_sim_imei),
+            responsiva_apn = VALUES(responsiva_apn),
+            centro_trabajo_correcto = VALUES(centro_trabajo_correcto),
+            responsiva = VALUES(responsiva),
+            serie_correcta_sistic = VALUES(serie_correcta_sistic),
+            serie_correcta_siitic = VALUES(serie_correcta_siitic),
+            asignacion_rpe_mysap = VALUES(asignacion_rpe_mysap),
+            total = VALUES(total);
+    `;
+
+    // ✅ Convertir valores vacíos en NULL o valores por defecto
+    const formatValue = (value, isNumber = false) => {
+        if (value === "" || value === undefined || value === null) {
+            return isNumber ? 0 : null;
+        }
+        return value;
+    };
+
+    db.query(query, [
+        formatValue(data.terminal_id, true),
+        formatValue(data.anio_antiguedad),
+        formatValue(data.rpe_usuario),
+        formatValue(data.fotografias_fisicas, true),
+        formatValue(data.etiqueta_activo_fijo, true),
+        formatValue(data.chip_con_serie_tableta, true),
+        formatValue(data.foto_carcasa, true),
+        formatValue(data.apn, true),
+        formatValue(data.correo_gmail),
+        formatValue(data.seguridad_desbloqueo, true),
+        formatValue(data.coincide_serie_sim_imei, true),
+        formatValue(data.responsiva_apn, true),
+        formatValue(data.centro_trabajo_correcto, true),
+        formatValue(data.responsiva, true),
+        formatValue(data.serie_correcta_sistic, true),
+        formatValue(data.serie_correcta_siitic, true),
+        formatValue(data.asignacion_rpe_mysap, true),
+        formatValue(data.total, true)
+    ], callback);
+};
+
+// ✅ Nueva función para actualizar un solo campo en la supervisión
+SupervisionTerminal.updateField = (terminalId, field, value, callback) => {
+    const query = `UPDATE supervision_terminales SET ?? = ? WHERE terminal_id = ?`;
+    db.query(query, [field, value, terminalId], callback);
+};
+
+SupervisionTerminal.getByTerminalId = (terminalId, callback) => {
+    const query = `
+        SELECT 
+            s.*, 
+            t.serie, 
+            t.inventario 
+        FROM supervision_terminales s
+        JOIN terminales t ON s.terminal_id = t.id
+        WHERE s.terminal_id = ?
+        ORDER BY s.id DESC
+    `;
+    db.query(query, [terminalId], callback);
+};
+
+
+
+module.exports = { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada, SupervisionTerminal };
