@@ -40,20 +40,20 @@ const getTerminales = (req, res) => {
 
 // Crear una nueva terminal
 const createTerminal = (req, res) => {
-    const { marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id } = req.body;
+    const { marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area } = req.body;
 
-    if (!marca || !modelo || !serie || !inventario || !rpe_responsable || !nombre_responsable || !usuario_id) {
+    if (!marca || !modelo || !serie || !inventario || !rpe_responsable || !nombre_responsable || !usuario_id || !area) {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
-    Terminal.create(marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, (err, result) => {
+    Terminal.create(marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, (err, result) => {
         if (err) {
             res.status(500).json({ message: "Error al crear la terminal" });
         } else {
             const terminalId = result.insertId;
 
             // ✅ Guardar en el historial
-            HistorialTerminal.create(terminalId, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, 'Creación', (histErr) => {
+            HistorialTerminal.create(terminalId, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, 'Creación', (histErr) => {
                 if (histErr) {
                     console.error("Error al registrar historial:", histErr);
                 }
@@ -67,18 +67,18 @@ const createTerminal = (req, res) => {
 // Actualizar terminal
 const updateTerminal = (req, res) => {
     const { id } = req.params;
-    const { marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id } = req.body;
+    const { marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area } = req.body;
 
-    if (!marca || !modelo || !serie || !inventario || !rpe_responsable || !nombre_responsable || !usuario_id) {
+    if (!marca || !modelo || !serie || !inventario || !rpe_responsable || !nombre_responsable || !usuario_id || !area) {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
-    Terminal.update(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, (err) => {
+    Terminal.update(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, (err) => {
         if (err) {
             res.status(500).json({ message: "Error al actualizar la terminal" });
         } else {
             // ✅ Guardar en el historial
-            HistorialTerminal.create(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, 'Actualización', (histErr) => {
+            HistorialTerminal.create(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, 'Actualización', (histErr) => {
                 if (histErr) {
                     console.error("Error al registrar historial:", histErr);
                 }
@@ -140,9 +140,9 @@ const uploadPhotos = async (req, res) => {
 };
 
 const marcarTerminalDanada = (req, res) => {
-    const { terminalId, marca, modelo, serie, inventario } = req.body;
+    const { terminalId, marca, modelo, area, serie, inventario } = req.body;
     
-    TerminalDanada.create(terminalId, marca, modelo, serie, inventario, (err, result) => {
+    TerminalDanada.create(terminalId, marca, modelo, area, serie, inventario, (err, result) => {
         if (err) {
             return res.status(500).json({ error: "Error al registrar la terminal dañada" });
         }
@@ -164,7 +164,7 @@ const obtenerTerminalesDanadas = (req, res) => {
 
 const actualizarTerminalDanada = (req, res) => {
     const { id } = req.params;
-    let { fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo } = req.body;
+    let { fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, piezasReparadas, observaciones, ticket } = req.body;
 
     if (!id) {
         return res.status(400).json({ message: "El ID de la terminal dañada es obligatorio" });
@@ -181,7 +181,7 @@ const actualizarTerminalDanada = (req, res) => {
     fechaAutorizacion = formatDate(fechaAutorizacion);
     fechaReparacion = formatDate(fechaReparacion);
 
-    TerminalDanada.update(id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, (err, result) => {
+    TerminalDanada.update(id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, piezasReparadas, observaciones, ticket, (err, result) => {
         if (err) {
             console.error("Error al actualizar la terminal dañada:", err);
             return res.status(500).json({ error: "Error al actualizar la terminal dañada" });
@@ -250,10 +250,62 @@ const getSupervisionHistorial = (req, res) => {
     });
 };
 
+const getPiezasTPS = (req, res) => {
+    Terminal.getPiezasTPS((err, results) => {
+        if (err) {
+            console.error("Error al obtener piezas TPS:", err);
+            return res.status(500).json({ error: "Error al obtener piezas" });
+        }
+        res.status(200).json(results);
+    });
+};
+
+const updatePiezaTPS = (req, res) => {
+    const { id } = req.params;
+    const { nombre_pieza, costo } = req.body;
+
+    if (!nombre_pieza || costo === undefined) {
+        return res.status(400).json({ message: "Nombre y costo son obligatorios" });
+    }
+
+    Terminal.updatePiezaTPS(id, nombre_pieza, costo, (err, result) => {
+        if (err) {
+            console.error("Error al actualizar la pieza:", err);
+            return res.status(500).json({ error: "Error al actualizar la pieza" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Pieza no encontrada" });
+        }
+
+        res.status(200).json({ message: "Pieza actualizada correctamente" });
+    });
+};
+
+const subirArchivoPDF = (req, res) => {
+    const id = req.params.id;
+    const archivo = req.file;
+  
+    if (!archivo) return res.status(400).json({ error: "No se subió ningún archivo" });
+  
+    const rutaPDF = `/uploads/${archivo.filename}`;
+  
+    Terminal.subirArchivoPDF(id, rutaPDF, (err, result) => {
+      if (err) return res.status(500).json({ error: "Error al guardar PDF" });
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Terminal no encontrada" });
+      }
+  
+      res.status(200).json({ mensaje: "Archivo subido", ruta: rutaPDF });
+    });
+  };  
+
 module.exports = { 
     getTerminales, createTerminal, updateTerminal, 
     uploadPhotos, getHistorial, marcarTerminalDanada, 
     obtenerTerminalesDanadas, actualizarTerminalDanada, getTerminalesPorArea, 
     SupervisionTerminal, saveSupervisionData, updateSupervisionData,
-    getSupervisionHistorial 
+    getSupervisionHistorial, getPiezasTPS, updatePiezaTPS,
+    subirArchivoPDF 
 };

@@ -22,16 +22,16 @@ Terminal.getByArea = (area, callback) => {
 };
 
 // Crear una nueva terminal
-Terminal.create = (marca, modelo, serie, inventario, rpe, nombre, usuarioId, callback) => {
-    const query = 'INSERT INTO terminales (marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    db.query(query, [marca, modelo, serie, inventario, rpe, nombre, usuarioId], callback);
-};
+Terminal.create = (marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, callback) => {
+    const query = 'INSERT INTO terminales (marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    db.query(query, [marca, modelo, serie, inventario, rpe, nombre, usuarioId, area], callback);
+},
 
-// Actualizar una terminal existente
-Terminal.update = (id, marca, modelo, serie, inventario, rpe, nombre, usuarioId, callback) => {
-    const query = 'UPDATE terminales SET marca = ?, modelo = ?, serie = ?, inventario = ?, rpe_responsable = ?, nombre_responsable = ?, usuario_id = ? WHERE id = ?';
-    db.query(query, [marca, modelo, serie, inventario, rpe, nombre, usuarioId, id], callback);
-};
+    // Actualizar una terminal existente
+    Terminal.update = (id, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, callback) => {
+        const query = 'UPDATE terminales SET marca = ?, modelo = ?, serie = ?, inventario = ?, rpe_responsable = ?, nombre_responsable = ?, usuario_id = ?, area = ? WHERE id = ?';
+        db.query(query, [marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, id], callback);
+    };
 
 // ✅ Modelo para guardar y recuperar fotos de terminales
 const TerminalFoto = {
@@ -70,11 +70,11 @@ const TerminalFoto = {
 };
 
 const HistorialTerminal = {
-    create: (terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, accion, callback) => {
+    create: (terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, accion, callback) => {
         const query = `INSERT INTO historial_terminales 
-                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, accion, fecha) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
-        db.query(query, [terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, accion], callback);
+                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, accion, fecha) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        db.query(query, [terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, accion], callback);
     },
 
     getAll: (callback) => {
@@ -83,16 +83,17 @@ const HistorialTerminal = {
     }
 };
 
-const TerminalDanada = {  
-    create: (terminalId, marca, modelo, serie, inventario, callback) => {
-        const query = `INSERT INTO terminales_danadas (terminal_id, marca, modelo, serie, inventario) VALUES (?, ?, ?, ?, ?)`;
-        db.query(query, [terminalId, marca, modelo, serie, inventario], callback);
+const TerminalDanada = {
+    create: (terminalId, marca, modelo, area, serie, inventario, callback) => {
+        const query = `INSERT INTO terminales_danadas (terminal_id, marca, modelo, area, serie, inventario) VALUES (?, ?, ?, ?, ?, ?)`;
+        db.query(query, [terminalId, marca, modelo, area, serie, inventario], callback);
     },
 
-    update: (id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, callback) => {
+    update: (id, fechaReporte, fechaGuia, fechaDiagnostico, fechaAutorizacion, fechaReparacion, diasReparacion, costo, piezasReparadas, observaciones, ticket, callback) => {
         const query = `UPDATE terminales_danadas 
                        SET fecha_reporte = ?, fecha_guia = ?, fecha_diagnostico = ?, 
-                           fecha_autorizacion = ?, fecha_reparacion = ?, dias_reparacion = ?, costo = ? 
+                           fecha_autorizacion = ?, fecha_reparacion = ?, dias_reparacion = ?, 
+                           costo = ?, piezas_reparadas = ?, observaciones = ?, ticket = ? 
                        WHERE id = ?`;
 
         // ✅ Asegurar que las fechas estén en formato 'YYYY-MM-DD' o NULL si no hay valor
@@ -106,6 +107,9 @@ const TerminalDanada = {
             formatDate(fechaReparacion),
             diasReparacion,
             costo,
+            piezasReparadas,
+            observaciones,
+            ticket,
             id
         ], callback);
     },
@@ -196,6 +200,56 @@ SupervisionTerminal.getByTerminalId = (terminalId, callback) => {
     db.query(query, [terminalId], callback);
 };
 
+Terminal.getPiezasTPS = (callback) => {
+    const query = 'SELECT * FROM piezas_tps';
+    db.query(query, callback);
+};
+
+Terminal.updatePiezaTPS = (id, nombre, costo, callback) => {
+    const query = 'UPDATE piezas_tps SET nombre_pieza = ?, costo = ? WHERE id = ?';
+    db.query(query, [nombre, costo, id], callback);
+};
+
+Terminal.subirArchivoPDF = (id, rutaPDF, callback) => {
+    const query = "UPDATE terminales_danadas SET archivo_pdf = ? WHERE id = ?";
+    db.query(query, [rutaPDF, id], callback);
+};
+
+Terminal.updateResponsablePorRP = (rpAntiguo, rpNuevo, nombreNuevo, callback) => {
+    const query = `UPDATE terminales 
+                   SET rpe_responsable = ?, nombre_responsable = ? 
+                   WHERE rpe_responsable = ?`;
+    db.query(query, [rpNuevo, nombreNuevo, rpAntiguo], callback);
+};
+
+Terminal.quitarResponsableDeArea = (area, callback) => {
+    const query = `UPDATE terminales 
+                   SET rpe_responsable = '-', nombre_responsable = '-' 
+                   WHERE area = ? AND rpe_responsable IS NOT NULL`;
+    db.query(query, [area], callback);
+  };
+  
+
+Terminal.asignarResponsableAreaVacia = (areaNombre, rp, nombre, callback) => {
+    const query = `
+        UPDATE terminales
+        SET rpe_responsable = ?, nombre_responsable = ?
+        WHERE area = ? AND (rpe_responsable = '' OR rpe_responsable IS NULL)
+    `;
+    db.query(query, [rp, nombre, areaNombre], callback);
+};
+
+Terminal.asignarResponsableAreaVacia = (areaNombre, rp, nombre, callback) => {
+    const query = `
+        UPDATE terminales
+        SET rpe_responsable = ?, nombre_responsable = ?
+        WHERE area = ?
+        AND (rpe_responsable IS NULL OR rpe_responsable = '' OR rpe_responsable = '-')
+    `;
+    db.query(query, [rp, nombre, areaNombre], callback);
+};
+
+  
 
 
 module.exports = { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada, SupervisionTerminal };

@@ -43,6 +43,19 @@ class User {
     static getAllAreas(callback) {
         db.query('SELECT * FROM areas', callback);
     }
+
+    static getByRP(rp, callback) {
+        db.query('SELECT * FROM usuarios WHERE rp = ?', [rp], callback);
+    }
+    
+    static findCentroByAreaId(areaId, callback) {
+        db.query('SELECT * FROM usuarios WHERE area_id = ? AND es_centro = 1 LIMIT 1', [areaId], callback);
+    }
+
+    static getAreaNombreById(areaId, callback) {
+        db.query('SELECT nom_area FROM areas WHERE id = ?', [areaId], callback);
+    }    
+
 }
 
 module.exports = User;
