@@ -8,7 +8,7 @@ const {
     getHistorial, marcarTerminalDanada,  obtenerTerminalesDanadas, 
     actualizarTerminalDanada, getTerminalesPorArea, saveSupervisionData, 
     updateSupervisionData, getSupervisionHistorial, getPiezasTPS,
-    updatePiezaTPS, subirArchivoPDF   
+    updatePiezaTPS, subirArchivoPDF, getSupervisionesPorArea   
 } = require('../controllers/terminalController');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -48,6 +48,7 @@ router.post('/terminales/supervision', authMiddleware, saveSupervisionData);
 router.put('/terminales/supervision/update', authMiddleware, updateSupervisionData);
 
 router.get('/terminales/supervision/historial/:terminalId', authMiddleware, getSupervisionHistorial);
+router.get('/terminales/supervision/area/:area', authMiddleware, getSupervisionesPorArea);
 
 router.get('/piezas', authMiddleware, getPiezasTPS);
 router.put('/piezas/:id', authMiddleware, updatePiezaTPS);

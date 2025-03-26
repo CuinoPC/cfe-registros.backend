@@ -128,7 +128,7 @@ SupervisionTerminal.save = (data, callback) => {
         INSERT INTO supervision_terminales (terminal_id, anio_antiguedad, rpe_usuario, fotografias_fisicas,
             etiqueta_activo_fijo, chip_con_serie_tableta, foto_carcasa, apn, correo_gmail, seguridad_desbloqueo,
             coincide_serie_sim_imei, responsiva_apn, centro_trabajo_correcto, responsiva, serie_correcta_sistic,
-            serie_correcta_siitic, asignacion_rpe_mysap, total)
+            serie_correcta_siitic, asignacion_rpe_mysap, total, area)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             anio_antiguedad = VALUES(anio_antiguedad),
@@ -148,6 +148,7 @@ SupervisionTerminal.save = (data, callback) => {
             serie_correcta_siitic = VALUES(serie_correcta_siitic),
             asignacion_rpe_mysap = VALUES(asignacion_rpe_mysap),
             total = VALUES(total);
+            area = VALUES(area);
     `;
 
     // ✅ Convertir valores vacíos en NULL o valores por defecto
@@ -176,9 +177,25 @@ SupervisionTerminal.save = (data, callback) => {
         formatValue(data.serie_correcta_sistic, true),
         formatValue(data.serie_correcta_siitic, true),
         formatValue(data.asignacion_rpe_mysap, true),
-        formatValue(data.total, true)
+        formatValue(data.total, true),
+        formatValue(data.area)
     ], callback);
 };
+
+SupervisionTerminal.getByArea = (areaNombre, callback) => {
+    const query = `
+        SELECT 
+            s.*, 
+            t.serie, 
+            t.inventario 
+        FROM supervision_terminales s
+        JOIN terminales t ON s.terminal_id = t.id
+        WHERE t.area = ?
+        ORDER BY s.id DESC;
+    `;
+    db.query(query, [areaNombre], callback);
+};
+
 
 // ✅ Nueva función para actualizar un solo campo en la supervisión
 SupervisionTerminal.updateField = (terminalId, field, value, callback) => {

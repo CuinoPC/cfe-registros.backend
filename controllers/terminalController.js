@@ -250,6 +250,19 @@ const getSupervisionHistorial = (req, res) => {
     });
 };
 
+const getSupervisionesPorArea = (req, res) => {
+    const { area } = req.params;
+
+    SupervisionTerminal.getByArea(area, (err, results) => {
+        if (err) {
+            console.error("Error al obtener supervisiones por área:", err);
+            res.status(500).json({ message: "Error interno" });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+};
+
 const getPiezasTPS = (req, res) => {
     Terminal.getPiezasTPS((err, results) => {
         if (err) {
@@ -307,5 +320,5 @@ module.exports = {
     obtenerTerminalesDanadas, actualizarTerminalDanada, getTerminalesPorArea, 
     SupervisionTerminal, saveSupervisionData, updateSupervisionData,
     getSupervisionHistorial, getPiezasTPS, updatePiezaTPS,
-    subirArchivoPDF 
+    subirArchivoPDF, getSupervisionesPorArea 
 };
