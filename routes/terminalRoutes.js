@@ -35,7 +35,7 @@ const upload = multer({ storage });
 router.get('/terminales', authMiddleware, getTerminales);
 router.post('/terminales', authMiddleware, createTerminal);
 router.put('/terminales/:id', authMiddleware, updateTerminal);
-router.post('/terminales/upload', upload.array('photos', 7), uploadPhotos);
+router.post('/terminales/upload', upload.array('photos', 10), uploadPhotos);
 
 router.get('/historial', authMiddleware, getHistorial);
 
