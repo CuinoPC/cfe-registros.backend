@@ -1,4 +1,4 @@
-const { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada, SupervisionTerminal } = require('../models/terminalModel');
+const { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada, SupervisionTerminal, MarcaTerminal, SupervisionHoneywell } = require('../models/terminalModel');
 
 // Obtener todas las terminales
 const getTerminales = (req, res) => {
@@ -312,7 +312,74 @@ const subirArchivoPDF = (req, res) => {
   
       res.status(200).json({ mensaje: "Archivo subido", ruta: rutaPDF });
     });
-  };  
+  };
+
+  // Obtener todas las marcas de terminales
+const getMarcasTerminales = (req, res) => {
+    MarcaTerminal.getAll((err, results) => {
+      if (err) {
+        console.error("Error al obtener marcas de terminales:", err);
+        return res.status(500).json({ message: "Error al obtener marcas" });
+      }
+      res.status(200).json(results);
+    });
+  };
+
+  // ✅ Guardar datos de supervisión Honeywell
+const saveSupervisionHoneywell = (req, res) => {
+    const data = req.body;
+
+    SupervisionHoneywell.save(data, (err, result) => {
+        if (err) {
+            console.error("Error al guardar datos de supervisión Honeywell:", err);
+            res.status(500).json({ message: "Error interno del servidor" });
+        } else {
+            res.status(201).json({ message: "Datos de supervisión guardados correctamente" });
+        }
+    });
+};
+
+// ✅ Actualizar un campo específico en tiempo real
+const updateSupervisionHoneywellField = (req, res) => {
+    const { terminal_id, field, value } = req.body;
+
+    SupervisionHoneywell.updateField(terminal_id, field, value, (err, result) => {
+        if (err) {
+            console.error("Error al actualizar supervisión Honeywell:", err);
+            res.status(500).json({ message: "Error interno del servidor" });
+        } else {
+            res.status(200).json({ message: "Campo actualizado correctamente" });
+        }
+    });
+};
+
+// ✅ Obtener historial de supervisión por terminal_id
+const getSupervisionHoneywellHistorial = (req, res) => {
+    const { terminalId } = req.params;
+
+    SupervisionHoneywell.getByTerminalId(terminalId, (err, results) => {
+        if (err) {
+            console.error("Error al obtener historial:", err);
+            return res.status(500).json({ message: "Error interno" });
+        }
+
+        res.status(200).json(results);
+    });
+};
+
+// ✅ Obtener supervisiones por área
+const getSupervisionesHoneywellPorArea = (req, res) => {
+    const { area } = req.params;
+
+    SupervisionHoneywell.getByArea(area, (err, results) => {
+        if (err) {
+            console.error("Error al obtener supervisiones por área:", err);
+            res.status(500).json({ message: "Error interno" });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+};
 
 module.exports = { 
     getTerminales, createTerminal, updateTerminal, 
@@ -320,5 +387,7 @@ module.exports = {
     obtenerTerminalesDanadas, actualizarTerminalDanada, getTerminalesPorArea, 
     SupervisionTerminal, saveSupervisionData, updateSupervisionData,
     getSupervisionHistorial, getPiezasTPS, updatePiezaTPS,
-    subirArchivoPDF, getSupervisionesPorArea 
+    subirArchivoPDF, getSupervisionesPorArea, getMarcasTerminales,
+    saveSupervisionHoneywell, updateSupervisionHoneywellField, getSupervisionHoneywellHistorial,
+    getSupervisionesHoneywellPorArea
 };

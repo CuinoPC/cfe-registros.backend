@@ -129,7 +129,7 @@ SupervisionTerminal.save = (data, callback) => {
             etiqueta_activo_fijo, chip_con_serie_tableta, foto_carcasa, apn, correo_gmail, seguridad_desbloqueo,
             coincide_serie_sim_imei, responsiva_apn, centro_trabajo_correcto, responsiva, serie_correcta_sistic,
             serie_correcta_siitic, asignacion_rpe_mysap, total, area)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             anio_antiguedad = VALUES(anio_antiguedad),
             rpe_usuario = VALUES(rpe_usuario),
@@ -147,7 +147,7 @@ SupervisionTerminal.save = (data, callback) => {
             serie_correcta_sistic = VALUES(serie_correcta_sistic),
             serie_correcta_siitic = VALUES(serie_correcta_siitic),
             asignacion_rpe_mysap = VALUES(asignacion_rpe_mysap),
-            total = VALUES(total);
+            total = VALUES(total),
             area = VALUES(area);
     `;
 
@@ -244,8 +244,8 @@ Terminal.quitarResponsableDeArea = (area, callback) => {
                    SET rpe_responsable = '-', nombre_responsable = '-' 
                    WHERE area = ? AND rpe_responsable IS NOT NULL`;
     db.query(query, [area], callback);
-  };
-  
+};
+
 
 Terminal.asignarResponsableAreaVacia = (areaNombre, rp, nombre, callback) => {
     const query = `
@@ -266,7 +266,107 @@ Terminal.asignarResponsableAreaVacia = (areaNombre, rp, nombre, callback) => {
     db.query(query, [rp, nombre, areaNombre], callback);
 };
 
-  
+Terminal.quitarResponsablePorRP = (rp, callback) => {
+    const query = `
+        UPDATE terminales
+        SET rpe_responsable = '-', nombre_responsable = '-'
+        WHERE rpe_responsable = ?
+    `;
+    db.query(query, [rp], callback);
+};
 
+Terminal.getByResponsable = (rp, callback) => {
+    const query = `SELECT * FROM terminales WHERE rpe_responsable = ?`;
+    db.query(query, [rp], callback);
+};
 
-module.exports = { Terminal, TerminalFoto, HistorialTerminal, TerminalDanada, SupervisionTerminal };
+const MarcaTerminal = {};
+
+// Obtener todas las marcas de terminales
+MarcaTerminal.getAll = (callback) => {
+    const query = 'SELECT * FROM marca_terminales';
+    db.query(query, callback);
+};
+
+const SupervisionHoneywell = {};
+
+// Guardar supervisión (con ON DUPLICATE para actualización)
+SupervisionHoneywell.save = (data, callback) => {
+    const {
+        terminal_id,
+        rpe_usuario,
+        coincide_serie_fisica_vs_interna,
+        fotografias_fisicas,
+        asignacion_usuario_sistic,
+        registro_serie_sistic,
+        centro_trabajo_sistic,
+        asignacion_usuario_siitic,
+        registro_serie_siitic,
+        centro_trabajo_siitic,
+        total,
+        area
+    } = data;
+
+    const query = `
+        INSERT INTO supervision_honeywell (
+            terminal_id, rpe_usuario, coincide_serie_fisica_vs_interna, fotografias_fisicas,
+            asignacion_usuario_sistic, registro_serie_sistic, centro_trabajo_sistic,
+            asignacion_usuario_siitic, registro_serie_siitic, centro_trabajo_siitic,
+            total, area
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            rpe_usuario = VALUES(rpe_usuario),
+            coincide_serie_fisica_vs_interna = VALUES(coincide_serie_fisica_vs_interna),
+            fotografias_fisicas = VALUES(fotografias_fisicas),
+            asignacion_usuario_sistic = VALUES(asignacion_usuario_sistic),
+            registro_serie_sistic = VALUES(registro_serie_sistic),
+            centro_trabajo_sistic = VALUES(centro_trabajo_sistic),
+            asignacion_usuario_siitic = VALUES(asignacion_usuario_siitic),
+            registro_serie_siitic = VALUES(registro_serie_siitic),
+            centro_trabajo_siitic = VALUES(centro_trabajo_siitic),
+            total = VALUES(total),
+            area = VALUES(area)
+    `;
+
+    db.query(query, [
+        terminal_id, rpe_usuario, coincide_serie_fisica_vs_interna, fotografias_fisicas,
+        asignacion_usuario_sistic, registro_serie_sistic, centro_trabajo_sistic,
+        asignacion_usuario_siitic, registro_serie_siitic, centro_trabajo_siitic,
+        total, area
+    ], callback);
+};
+
+// Actualizar campo específico
+SupervisionHoneywell.updateField = (terminal_id, field, value, callback) => {
+    const query = `UPDATE supervision_honeywell SET ?? = ? WHERE terminal_id = ?`;
+    db.query(query, [field, value, terminal_id], callback);
+};
+
+// Obtener supervisión por terminal
+SupervisionHoneywell.getByTerminalId = (terminal_id, callback) => {
+    const query = `
+        SELECT s.*, t.serie, t.inventario
+        FROM supervision_honeywell s
+        JOIN terminales t ON s.terminal_id = t.id
+        WHERE s.terminal_id = ?
+        ORDER BY s.id DESC
+    `;
+    db.query(query, [terminal_id], callback);
+};
+
+// Obtener supervisiones por área
+SupervisionHoneywell.getByArea = (area, callback) => {
+    const query = `
+        SELECT s.*, t.serie, t.inventario
+        FROM supervision_honeywell s
+        JOIN terminales t ON s.terminal_id = t.id
+        WHERE s.area = ?
+        ORDER BY s.id DESC
+    `;
+    db.query(query, [area], callback);
+};
+module.exports = {
+    Terminal, TerminalFoto, HistorialTerminal,
+    TerminalDanada, SupervisionTerminal, MarcaTerminal,
+    SupervisionHoneywell
+};

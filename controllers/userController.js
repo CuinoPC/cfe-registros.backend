@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
-const { Terminal } = require('../models/terminalModel');
+const { Terminal, HistorialTerminal, } = require('../models/terminalModel');
+const { Lector, HistorialLector } = require('../models/lectorModel');
 
 exports.createUser = async (req, res) => {
     const { nombre_completo, rp, area_id, contrasenia, es_admin, es_centro } = req.body;
@@ -61,20 +62,73 @@ exports.updateUser = (req, res) => {
 
                         if (nuevos.length > 0) {
                             const nuevoJefe = nuevos[0];
+                            // 🔄 Terminales
                             Terminal.updateResponsablePorRP(
                                 rp,
                                 nuevoJefe.rp,
                                 nuevoJefe.nombre_completo,
-                                (err) => err ? reject('Error al reasignar terminales') : resolve()
+                                (err) => {
+                                    if (err) return reject('Error al reasignar terminales');
+                                    Terminal.getByResponsable(nuevoJefe.rp, (err, terminales) => {
+                                        if (err || !terminales) return resolve();
+                                        terminales.forEach((terminal) => {
+                                            HistorialTerminal.create(
+                                                terminal.id,
+                                                terminal.marca,
+                                                terminal.modelo,
+                                                terminal.serie,
+                                                terminal.inventario,
+                                                nuevoJefe.rp,
+                                                nuevoJefe.nombre_completo,
+                                                terminal.usuario_id,
+                                                terminal.area,
+                                                'Actualización',
+                                                () => { }
+                                            );
+                                        });
+                                        resolve();
+                                    });
+                                }
                             );
+                            // 🔄 Lectores
+                            Lector.updateResponsablePorRP(
+                                rp,
+                                nuevoJefe.rp,
+                                nuevoJefe.nombre_completo,
+                                (err) => {
+                                    if (err) return reject('Error al reasignar lectores');
+                                    Lector.getByResponsable(nuevoJefe.rp, (err, lectores) => {
+                                        if (err || !lectores) return resolve();
+                                        lectores.forEach((lector) => {
+                                            HistorialLector.create(
+                                                lector.id,
+                                                lector.marca,
+                                                lector.modelo,
+                                                lector.folio,
+                                                lector.tipo_conector,
+                                                nuevoJefe.rp,
+                                                nuevoJefe.nombre_completo,
+                                                lector.usuario_id,
+                                                lector.area,
+                                                'Actualización',
+                                                () => { }
+                                            );
+                                        });
+                                        resolve();
+                                    });
+                                }
+                            );
+
                         } else {
                             User.getAreaNombreById(areaAnterior, (err, resultArea) => {
                                 if (err || resultArea.length === 0) return reject('Error al obtener área');
-
                                 const nombreAreaAnterior = resultArea[0].nom_area;
-                                Terminal.quitarResponsableDeArea(nombreAreaAnterior, (err) =>
-                                    err ? reject('Error al quitar responsables') : resolve()
-                                );
+                                Terminal.quitarResponsableDeArea(nombreAreaAnterior, (err) => {
+                                    if (err) return reject('Error al quitar responsables de terminales');
+                                    Lector.quitarResponsableDeArea(nombreAreaAnterior, (err) =>
+                                        err ? reject('Error al quitar responsables de lectores') : resolve()
+                                    );
+                                });
                             });
                         }
                     });
@@ -84,30 +138,73 @@ exports.updateUser = (req, res) => {
             // 🧹 Si ya no es jefe de centro
             if (usuarioAnterior.es_centro === 1 && es_centro === false) {
                 tareasPendientes.push(new Promise((resolve, reject) => {
-                    Terminal.quitarResponsablePorRP(rp, (err) =>
-                        err ? reject('Error al quitar responsable del usuario') : resolve()
-                    );
+                    Terminal.quitarResponsablePorRP(rp, (err) => {
+                        if (err) return reject('Error al quitar responsable de terminales');
+                        Lector.quitarResponsablePorRP(rp, (err) =>
+                            err ? reject('Error al quitar responsable de lectores') : resolve()
+                        );
+                    });
                 }));
             }
+
 
             // ✅ Si ahora es jefe de centro
             if (es_centro) {
                 tareasPendientes.push(new Promise((resolve, reject) => {
                     User.getAreaNombreById(area_id, (err, areaResult) => {
                         if (err || areaResult.length === 0) return reject('Error al obtener nombre del área');
-
                         const nombreArea = areaResult[0].nom_area;
-                        Terminal.asignarResponsableAreaVacia(nombreArea, rp, nombre_completo, (err) =>
-                            err ? reject('Error al asignar terminales al nuevo jefe') : resolve()
-                        );
+                        Terminal.asignarResponsableAreaVacia(nombreArea, rp, nombre_completo, (err) => {
+                            if (err) return reject('Error al asignar terminales al nuevo jefe');
+                            Terminal.getByResponsable(rp, (err, terminales) => {
+                                if (err || !terminales) return resolve();
+                                terminales.forEach((terminal) => {
+                                    HistorialTerminal.create(
+                                        terminal.id,
+                                        terminal.marca,
+                                        terminal.modelo,
+                                        terminal.serie,
+                                        terminal.inventario,
+                                        rp,
+                                        nombre_completo,
+                                        terminal.usuario_id,
+                                        terminal.area,
+                                        'Actualización',
+                                        () => { }
+                                    );
+                                });
+                                resolve();
+                            });
+                        });
+                        Lector.asignarResponsableAreaVacia(nombreArea, rp, nombre_completo, (err) => {
+                            if (err) return reject('Error al asignar lectores al nuevo jefe');
+                            Lector.getByResponsable(rp, (err, lectores) => {
+                                if (err || !lectores) return resolve();
+                                lectores.forEach((lector) => {
+                                    HistorialLector.create(
+                                        lector.id,
+                                        lector.marca,
+                                        lector.modelo,
+                                        lector.folio,
+                                        lector.tipo_conector,
+                                        rp,
+                                        nombre_completo,
+                                        lector.usuario_id,
+                                        lector.area,
+                                        'Actualización',
+                                        () => { }
+                                    );
+                                });
+                                resolve();
+                            });
+                        });
                     });
                 }));
             }
 
-            // 🔚 Esperar que todas las tareas se completen
             Promise.all(tareasPendientes)
                 .then(() => {
-                    return res.json({ message: 'Usuario y terminales actualizados correctamente' });
+                    return res.json({ message: 'Usuario, terminales y lectores actualizados correctamente' });
                 })
                 .catch((errorMsg) => {
                     return res.status(500).json({ error: errorMsg });

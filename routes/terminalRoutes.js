@@ -8,7 +8,9 @@ const {
     getHistorial, marcarTerminalDanada,  obtenerTerminalesDanadas, 
     actualizarTerminalDanada, getTerminalesPorArea, saveSupervisionData, 
     updateSupervisionData, getSupervisionHistorial, getPiezasTPS,
-    updatePiezaTPS, subirArchivoPDF, getSupervisionesPorArea   
+    updatePiezaTPS, subirArchivoPDF, getSupervisionesPorArea,
+    getMarcasTerminales, saveSupervisionHoneywell, updateSupervisionHoneywellField, 
+    getSupervisionHoneywellHistorial, getSupervisionesHoneywellPorArea    
 } = require('../controllers/terminalController');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -59,6 +61,14 @@ router.post(
     upload.single('archivo'),
     subirArchivoPDF
 );
+
+router.get('/terminales/marcas', authMiddleware, getMarcasTerminales);
+
+router.post('/supervision-honeywell', authMiddleware, saveSupervisionHoneywell);
+router.put('/supervision-honeywell/update', authMiddleware, updateSupervisionHoneywellField);
+router.get('/supervision-honeywell/historial/:terminalId', authMiddleware, getSupervisionHoneywellHistorial);
+router.get('/supervision-honeywell/area/:area', authMiddleware, getSupervisionesHoneywellPorArea);
+
 
 module.exports = router;
 
