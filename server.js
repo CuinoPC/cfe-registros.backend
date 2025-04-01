@@ -13,13 +13,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // 🔹 Hacer pública la carpeta "uploads" para servir imágenes
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', terminalRoutes);
 app.use('/api', lectoresRoutes);
 
-app.listen(5000, () => {
-    console.log('Servidor corriendo en el puerto 5000');
-});
+app.listen(5000, '0.0.0.0', () => {
+    console.log('Servidor corriendo en http://localhost:5000');
+  });

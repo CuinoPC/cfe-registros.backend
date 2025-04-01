@@ -15,7 +15,7 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 
 // 📂 Asegurar que la carpeta `uploads/` existe
-const uploadDir = path.join(__dirname, '../uploads');
+const uploadDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }

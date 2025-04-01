@@ -46,6 +46,8 @@ const createTerminal = (req, res) => {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
+    const realizadoPor = req.body.realizado_por;
+
     Terminal.create(marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, (err, result) => {
         if (err) {
             res.status(500).json({ message: "Error al crear la terminal" });
@@ -53,7 +55,7 @@ const createTerminal = (req, res) => {
             const terminalId = result.insertId;
 
             // ✅ Guardar en el historial
-            HistorialTerminal.create(terminalId, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, 'Creación', (histErr) => {
+            HistorialTerminal.create(terminalId, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, 'Creación', realizadoPor, (histErr) => {
                 if (histErr) {
                     console.error("Error al registrar historial:", histErr);
                 }
@@ -73,12 +75,14 @@ const updateTerminal = (req, res) => {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
+    const realizadoPor = req.body.realizado_por;
+
     Terminal.update(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, (err) => {
         if (err) {
             res.status(500).json({ message: "Error al actualizar la terminal" });
         } else {
             // ✅ Guardar en el historial
-            HistorialTerminal.create(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, 'Actualización', (histErr) => {
+            HistorialTerminal.create(id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, 'Actualización', realizadoPor, (histErr) => {
                 if (histErr) {
                     console.error("Error al registrar historial:", histErr);
                 }

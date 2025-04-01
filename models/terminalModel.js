@@ -70,11 +70,11 @@ const TerminalFoto = {
 };
 
 const HistorialTerminal = {
-    create: (terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, accion, callback) => {
+    create: (terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, accion, realizadoPor, callback) => {
         const query = `INSERT INTO historial_terminales 
-                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, accion, fecha) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
-        db.query(query, [terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, accion], callback);
+                      (terminal_id, marca, modelo, serie, inventario, rpe_responsable, nombre_responsable, usuario_id, area, accion, realizado_por, fecha) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        db.query(query, [terminalId, marca, modelo, serie, inventario, rpe, nombre, usuarioId, area, accion, realizadoPor], callback);
     },
 
     getAll: (callback) => {

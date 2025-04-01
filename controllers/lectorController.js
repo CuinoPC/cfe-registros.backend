@@ -44,11 +44,13 @@ const createLector = (req, res) => {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
+    const realizadoPor = req.body.realizado_por;
+
     Lector.create(marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, (err, result) => {
         if (err) return res.status(500).json({ message: "Error al crear el lector" });
 
         const lectorId = result.insertId;
-        HistorialLector.create(lectorId, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, 'Creación', () => {});
+        HistorialLector.create(lectorId, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, 'Creación', realizadoPor, () => {});
         res.status(201).json({ message: "Lector creado con éxito", id: lectorId });
     });
 };
@@ -62,10 +64,12 @@ const updateLector = (req, res) => {
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
+    const realizadoPor = req.body.realizado_por;
+
     Lector.update(id, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, (err) => {
         if (err) return res.status(500).json({ message: "Error al actualizar el lector" });
 
-        HistorialLector.create(id, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, 'Actualización', () => {});
+        HistorialLector.create(id, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, 'Actualización', realizadoPor, () => {});
         res.status(200).json({ message: "Lector actualizado con éxito" });
     });
 };

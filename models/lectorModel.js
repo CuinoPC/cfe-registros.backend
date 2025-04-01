@@ -81,11 +81,11 @@ const LectorFoto = {
 
 // =================== HISTORIAL DE LECTORES ===================
 const HistorialLector = {
-    create: (lectorId, marca, modelo, folio, tipoConector, rpe, nombre, usuarioId, area, accion, callback) => {
+    create: (lectorId, marca, modelo, folio, tipoConector, rpe, nombre, usuarioId, area, accion, realizadoPor, callback) => {
         const query = `INSERT INTO historial_lectores 
-                      (lector_id, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, accion, fecha) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
-        db.query(query, [lectorId, marca, modelo, folio, tipoConector, rpe, nombre, usuarioId, area, accion], callback);
+                      (lector_id, marca, modelo, folio, tipo_conector, rpe_responsable, nombre_responsable, usuario_id, area, accion, realizado_por, fecha) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        db.query(query, [lectorId, marca, modelo, folio, tipoConector, rpe, nombre, usuarioId, area, accion, realizadoPor], callback);
     },
 
     getAll: (callback) => {
